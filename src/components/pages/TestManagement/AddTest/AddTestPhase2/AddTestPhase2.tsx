@@ -1,4 +1,8 @@
-import { faChevronLeft, faPlay } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCheck,
+  faChevronLeft,
+  faPlay,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
@@ -7,6 +11,7 @@ import GuideImg3 from "../../../../../assets/images/guideImg3.png";
 import GuideImg4 from "../../../../../assets/images/guideImg4.png";
 import { ChangeEvent, useState } from "react";
 import { useForm } from "react-hook-form";
+import ImageModal from "./Modal/ImageModal";
 
 const Main = styled.main`
   background-color: #f8f9fa;
@@ -279,6 +284,8 @@ const AddImg = styled.label`
   justify-content: center;
   align-items: center;
   margin-bottom: 16px;
+  cursor: pointer;
+  margin-bottom: 40px;
 `;
 
 const Plus = styled.span`
@@ -363,6 +370,76 @@ const TextAreaContainer = styled.div`
   margin-bottom: 70px;
 `;
 
+const DirectionContainer = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-bottom: 40px;
+`;
+
+const Direction = styled.label`
+  width: 359px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 5px;
+  background-color: white;
+  color: #555555;
+  cursor: pointer;
+
+  input[type="radio"]:checked + & {
+    background-color: #2282e9;
+    color: white;
+  }
+`;
+
+const PointSpan = styled.span`
+  position: absolute;
+  color: #2282e9;
+  font-weight: 500;
+  font-size: 14px;
+  bottom: 41px;
+  right: 30px;
+`;
+
+const ThumbnailImg = styled.img`
+  width: 80px;
+  height: 80px;
+`;
+
+const BackgroundImg = styled.img`
+  width: 142px;
+  height: 80px;
+`;
+
+const ImgChangeBtn = styled.label`
+  cursor: pointer;
+  width: 173px;
+  height: 37px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  border: 1px solid #ededed;
+  color: #797979;
+  font-weight: 500;
+  font-size: 14px;
+  margin-left: 35px;
+  margin-right: 30px;
+`;
+
+const ImagesWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const ImagesContainer = styled.div`
+  margin-left: 18px;
+  display: flex;
+  gap: 8px;
+`;
+
 interface GenreId {
   id: number;
   content: string;
@@ -390,7 +467,10 @@ const genre = [
 ];
 
 export default function AddTestPhase2() {
-  const { register } = useForm();
+  const MAX_FILES = 5;
+  const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+  const { register, setValue } = useForm();
   const [platform, setPlatform] = useState("게임의 플랫폼을 선택해 주세요.");
   const [openPlatform, setOpenPlatform] = useState(false);
   const [genreId, setGenreId] = useState<GenreId[]>([]);
@@ -398,6 +478,26 @@ export default function AddTestPhase2() {
 
   const [description, setDescription] = useState<string>("");
   const [cbtDescription, setCbtDescription] = useState<string>("");
+
+  const [imageModal, setImageModal] = useState(false);
+
+  const [thumbnailImage, setThumbnailImage] = useState<File | undefined>();
+  const [backgroundImage, setBackgroundImage] = useState<File | undefined>();
+  const [surveyBackgroundImage, setSurveyBackgroundImage] = useState<
+    File | undefined
+  >();
+  const [ingameImages, setIngameImages] = useState<File[]>([]);
+  const [phaseOneExampleImage, setPhaseOneExampleImage] = useState<
+    File | undefined
+  >();
+
+  const closeImageModal = () => {
+    setImageModal(false);
+  };
+
+  const openImageModal = () => {
+    setImageModal(true);
+  };
 
   const handleDescriptionChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setDescription(e.target.value);
@@ -422,8 +522,177 @@ export default function AddTestPhase2() {
     }
   };
 
+  const ThumbnailImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFile = e.target.files[0];
+      if (selectedFile) {
+        const fileSizeInMB = selectedFile.size / (1024 * 1024);
+        if (fileSizeInMB < 1) {
+          setValue("thumbnail", selectedFile);
+          encodeThumbnailImageToBase64(selectedFile);
+        } else {
+          alert("파일 크기가 1MB를 초과합니다. 다른 파일을 등록해주세요.");
+        }
+      }
+    }
+  };
+
+  const encodeThumbnailImageToBase64 = (file: File) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      setThumbnailImage(file);
+    };
+  };
+
+  const removeThumbnailImage = () => {
+    setThumbnailImage(undefined);
+    setValue("thumbnail", "");
+  };
+
+  const backgroundImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFile = e.target.files[0];
+      if (selectedFile) {
+        const fileSizeInMB = selectedFile.size / (1024 * 1024);
+        if (fileSizeInMB < 1) {
+          setValue("background", selectedFile);
+          encodeBackgroundImageToBase64(selectedFile);
+        } else {
+          alert("파일 크기가 1MB를 초과합니다. 다른 파일을 등록해주세요.");
+        }
+      }
+    }
+  };
+
+  const encodeBackgroundImageToBase64 = (file: File) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      setBackgroundImage(file);
+    };
+  };
+
+  const removeBackgroundImage = () => {
+    setBackgroundImage(undefined);
+    setValue("background", "");
+  };
+
+  const surveyBackgroundImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFile = e.target.files[0];
+      if (selectedFile) {
+        const fileSizeInMB = selectedFile.size / (1024 * 1024);
+        if (fileSizeInMB < 1) {
+          setValue("surveyBackground", selectedFile);
+          encodeSurveyBackgroundImageToBase64(selectedFile);
+        } else {
+          alert("파일 크기가 1MB를 초과합니다. 다른 파일을 등록해주세요.");
+        }
+      }
+    }
+  };
+
+  const encodeSurveyBackgroundImageToBase64 = (file: File) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      setSurveyBackgroundImage(file);
+    };
+  };
+
+  const removeSurveyBackgroundImage = () => {
+    setSurveyBackgroundImage(undefined);
+    setValue("surveyBackground", "");
+  };
+
+  const ingameImagesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files) return;
+
+    const selectedFiles = Array.from(event.target.files);
+
+    // 새 파일 추가 후 전체 파일 목록 계산
+    const totalFiles = [...ingameImages, ...selectedFiles];
+
+    // 파일 개수 제한 검사
+    if (totalFiles.length > MAX_FILES) {
+      alert(`최대 ${MAX_FILES}개의 파일만 업로드할 수 있습니다!`);
+      return;
+    }
+
+    // 전체 파일 크기 계산
+    const totalSize = totalFiles.reduce((acc, file) => acc + file.size, 0);
+
+    if (totalSize > MAX_SIZE) {
+      alert("파일들의 총 용량이 5MB를 초과했습니다!");
+      return;
+    }
+
+    // 파일 목록 업데이트
+    setIngameImages(totalFiles);
+    setValue("images", totalFiles);
+  };
+
+  const removeIngameImages = (index: any) => {
+    setIngameImages(ingameImages.filter((_, i) => i !== index));
+    setValue("images", ingameImages);
+  };
+
+  const phaseOneExampleImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFile = e.target.files[0];
+      if (selectedFile) {
+        const fileSizeInMB = selectedFile.size / (1024 * 1024);
+        if (fileSizeInMB < 1) {
+          setValue("phaseOneExample", selectedFile);
+          encodePhaseOneExampleImageToBase64(selectedFile);
+        } else {
+          alert("파일 크기가 1MB를 초과합니다. 다른 파일을 등록해주세요.");
+        }
+      }
+    }
+  };
+
+  const encodePhaseOneExampleImageToBase64 = (file: File) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      setPhaseOneExampleImage(file);
+    };
+  };
+
+  const removePhaseOneExampleImage = () => {
+    setPhaseOneExampleImage(undefined);
+    setValue("phaseOneExample", "");
+  };
+
   return (
     <Main>
+      {imageModal && (
+        <ImageModal
+          close={closeImageModal}
+          ThumbnailImageChange={ThumbnailImageChange}
+          thumbnailImage={thumbnailImage}
+          setThumbnailImage={setThumbnailImage}
+          removeThumbnailImage={removeThumbnailImage}
+          backgroundImageChange={backgroundImageChange}
+          backgroundImage={backgroundImage}
+          setBackgroundImage={setBackgroundImage}
+          removeBackgroundImage={removeBackgroundImage}
+          surveyBackgroundImageChange={surveyBackgroundImageChange}
+          surveyBackgroundImage={surveyBackgroundImage}
+          setsurveyBackgroundImage={setSurveyBackgroundImage}
+          removeSurveyBackgroundImage={removeSurveyBackgroundImage}
+          ingameImagesChange={ingameImagesChange}
+          ingameImages={ingameImages}
+          setIngameImages={setIngameImages}
+          removeIngameImages={removeIngameImages}
+        />
+      )}
       <TopWrapper>
         <TopContainer>
           <Link to="/home/test-list/add" style={{ textDecoration: "none" }}>
@@ -566,9 +835,71 @@ export default function AddTestPhase2() {
         <Bar />
         <Title>게임 이미지</Title>
         <Comment>영상 및 이미지를 규격에 맞게 추가해주세요.</Comment>
-        <AddImg>
-          <Plus>+</Plus>게임 이미지 추가하기
-        </AddImg>
+        {thumbnailImage ||
+        ingameImages.length !== 0 ||
+        backgroundImage ||
+        surveyBackgroundImage ? (
+          <AddImg onClick={openImageModal} style={{ alignItems: "stretch" }}>
+            <ImagesWrapper>
+              {thumbnailImage &&
+                ingameImages.length !== 0 &&
+                backgroundImage &&
+                surveyBackgroundImage && (
+                  <div
+                    style={{
+                      backgroundColor: "#2282e9",
+                      width: "20px",
+                      height: "20px",
+                      borderRadius: "999px",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      marginLeft: "18px",
+                    }}
+                  >
+                    <FontAwesomeIcon
+                      icon={faCheck}
+                      style={{
+                        color: "white",
+                      }}
+                    />
+                  </div>
+                )}
+              <ImagesContainer>
+                {thumbnailImage && (
+                  <ThumbnailImg
+                    src={URL.createObjectURL(thumbnailImage)}
+                    alt=""
+                  />
+                )}
+                {backgroundImage && (
+                  <BackgroundImg
+                    src={URL.createObjectURL(backgroundImage)}
+                    alt=""
+                  />
+                )}
+                {surveyBackgroundImage && (
+                  <BackgroundImg
+                    src={URL.createObjectURL(surveyBackgroundImage)}
+                    alt=""
+                  />
+                )}
+              </ImagesContainer>
+              <ImgChangeBtn onClick={openImageModal}>
+                + 게임 이미지 변경하기
+              </ImgChangeBtn>
+            </ImagesWrapper>
+          </AddImg>
+        ) : (
+          <AddImg onClick={openImageModal}>
+            <Plus>+</Plus>
+            <span>게임 이미지 추가하기</span>
+          </AddImg>
+        )}
+        <Title>게임 영상</Title>
+        <Comment>
+          유튜브 페이지 상단 주소창 URL 을 복사한 링크를 작성해주세요.
+        </Comment>
         <Input style={{ borderColor: "#ededed", marginBottom: "70px" }} />
         <Bar />
         <Title>게임 다운로드 방식</Title>
@@ -594,12 +925,84 @@ export default function AddTestPhase2() {
           상세하게 표시해주는 것이 좋습니다.
         </Comment>
         <SubTitle>미션 설명</SubTitle>
-        <TextArea style={{ height: "80px" }} />
+        <TextArea
+          style={{ height: "80px", marginBottom: "40px" }}
+          placeholder="미션을 설명해주세요. 간단하고 명료하게 작성해주시는게 좋습니다. (ex. 상점 레벨 8까지 달성해주세요.)"
+        />
+        <Title>이미지 유형 선택</Title>
+        <Comment>
+          게임 이미지 방향이 세로형인지 가로형인지 선택해주세요.
+        </Comment>
+        <DirectionContainer>
+          <input
+            type="radio"
+            id="vertical"
+            name="direction"
+            style={{ display: "none" }}
+          />
+          <Direction htmlFor="vertical">세로형</Direction>
+          <input
+            type="radio"
+            id="horizontal"
+            name="direction"
+            style={{ display: "none" }}
+          />
+          <Direction htmlFor="horizontal">가로형</Direction>
+        </DirectionContainer>
         <SubTitle>미션 예시 이미지 등록</SubTitle>
         <Comment>미션 확인 부분을 강조 해주시는 것을 추천드립니다.</Comment>
-        <AddImg>
-          <Plus>+</Plus>미션 이미지 추가하기
-        </AddImg>
+        <input
+          type="file"
+          accept=".jpeg, .png"
+          onChange={(e) => phaseOneExampleImageChange(e)}
+          style={{ display: "none" }}
+          id="phaseOneExample"
+        />
+
+        {phaseOneExampleImage ? (
+          <AddImg style={{ alignItems: "stretch" }}>
+            <ImagesWrapper>
+              <div style={{ display: "flex" }}>
+                <div
+                  style={{
+                    backgroundColor: "#2282e9",
+                    width: "20px",
+                    height: "20px",
+                    borderRadius: "999px",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginLeft: "18px",
+                  }}
+                >
+                  <FontAwesomeIcon
+                    icon={faCheck}
+                    style={{
+                      color: "white",
+                    }}
+                  />
+                </div>
+
+                <ImagesContainer>
+                  {phaseOneExampleImage && (
+                    <ThumbnailImg
+                      src={URL.createObjectURL(phaseOneExampleImage)}
+                      alt=""
+                    />
+                  )}
+                </ImagesContainer>
+              </div>
+              <ImgChangeBtn htmlFor="phaseOneExample">
+                + 게임 이미지 변경하기
+              </ImgChangeBtn>
+            </ImagesWrapper>
+          </AddImg>
+        ) : (
+          <AddImg htmlFor="phaseOneExample">
+            <Plus>+</Plus>미션 이미지 추가하기
+          </AddImg>
+        )}
+
         <GuideBox style={{ gap: "0px", height: "336px" }}>
           <div style={{ marginRight: "43px" }}>
             <GuideTitle>💡 GUIDE</GuideTitle>
@@ -637,7 +1040,10 @@ export default function AddTestPhase2() {
           유저에게 지급되는 재화가 높을 수록 안정적인 테스터 모집과 높은 등급의
           유저와 매칭될 수 있습니다.
         </Comment>
-        <Input />
+        <div style={{ position: "relative", width: "730px" }}>
+          <Input />
+          <PointSpan>포인트</PointSpan>
+        </div>
         <CommentBlue>
           지급재화는 1000 포인트 이상으로 작성해야 하며, 1000 포인트 초과시 추가
           금액(차액x희망 유저 수)이 발생됩니다. <br />
