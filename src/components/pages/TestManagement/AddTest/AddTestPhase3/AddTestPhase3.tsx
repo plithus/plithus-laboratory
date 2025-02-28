@@ -1,7 +1,10 @@
 import { faChevronLeft } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import MultipleQuestionModal from "./Modal/MultipleQuestionModal";
+import SubjectiveQuestionModal from "./Modal/SubjectiveQuestionModal";
 
 const Main = styled.main`
   background-color: #f8f9fa;
@@ -155,12 +158,50 @@ const QuestionBox = styled.div`
   border-radius: 10px;
   background-color: white;
   border: 1px solid #ededed;
-  margin-bottom: 129px;
+  margin-bottom: 10px;
+`;
+
+const AddQuestionBtn = styled.button`
+  display: block;
+  width: 1280px;
+  height: 49px;
+  border-radius: 5px;
+  border: 1px solid #2282e9;
+  background-color: white;
+  margin-bottom: 70px;
+  font-weight: 600;
+  color: #2282e9;
+  cursor: pointer;
 `;
 
 export default function AddTestPhase3() {
+  const [multipleQuestionModal, setMultipleQuestionModal] = useState(false);
+  const [subjectiveQuestionModal, setSubjectiveQuestionModal] = useState(false);
+
+  const closeMultipleQuestionModal = () => {
+    setMultipleQuestionModal(false);
+  };
+
+  const openMultipleQuestionModal = () => {
+    setMultipleQuestionModal(true);
+  };
+
+  const closeSubjectiveQuestionModal = () => {
+    setSubjectiveQuestionModal(false);
+  };
+
+  const openSubjectiveQuestionModal = () => {
+    setSubjectiveQuestionModal(true);
+  };
+
   return (
     <Main>
+      {multipleQuestionModal && (
+        <MultipleQuestionModal close={closeMultipleQuestionModal} />
+      )}
+      {subjectiveQuestionModal && (
+        <SubjectiveQuestionModal close={closeSubjectiveQuestionModal} />
+      )}
       <TopWrapper>
         <TopContainer>
           <Link to="/home/test-list/add" style={{ textDecoration: "none" }}>
@@ -169,7 +210,7 @@ export default function AddTestPhase3() {
                 icon={faChevronLeft}
                 style={{ marginRight: "20px" }}
               />
-              3단계 테스트 플랜
+              3단계 질문 구성
             </TopTitle>
           </Link>
           <BtnContainer>
@@ -209,9 +250,15 @@ export default function AddTestPhase3() {
         <Title>객관식 질문</Title>
         <Comment>현재 총 0 문항</Comment>
         <QuestionBox></QuestionBox>
+        <AddQuestionBtn onClick={openMultipleQuestionModal}>
+          + 객관식 질문 추가
+        </AddQuestionBtn>
         <Title>주관식 질문</Title>
         <Comment>현재 총 0 문항</Comment>
         <QuestionBox></QuestionBox>
+        <AddQuestionBtn onClick={openSubjectiveQuestionModal}>
+          + 주관식 질문 추가
+        </AddQuestionBtn>
       </ContentWrapper>
     </Main>
   );
